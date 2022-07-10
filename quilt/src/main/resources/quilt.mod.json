@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "${group}",
+    "id": "untitledcreaturemod",
+    "version": "${version}",
+    "name": "Untitled Creature Mod",
+    "description": "This is an example description! Tell everyone what your mod is about!",
+    "authors": ["Untitled Authors"],
+    "contact": {
+      "sources": "https://github.com/UntitledCreatures/UntitledCreatureMod"
+    },
+    "license": "MIT",
+    "icon": "logo.png",
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "environment": "*",
+    "entrypoints": {
+      "init": [
+        "net.untitledcreaturemod.quilt.UntitledCreatureModQuilt"
+      ]
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "version": "*"
+      },
+      {
+        "id": "quilt_base",
+        "version": "*"
+      },
+      {
+        "id": "minecraft",
+        "version": ">=${minecraft_version}"
+      }
+    ]
+  }
+}
