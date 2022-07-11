@@ -8,9 +8,10 @@ pluginManagement {
 }
 
 include("common")
-include("fabric-like")
 include("fabric")
-include("quilt")
 include("forge")
+
+// include("quilt")
+// include("fabric-like")
 
 rootProject.name = "UntitledCreatureMod"

@@ -1,6 +1,5 @@
 package net.untitledcreaturemod.toad;
 
-import com.eliotlash.mclib.math.functions.classic.Mod;
 import net.minecraft.util.Identifier;
 import net.untitledcreaturemod.setup.ModIdentifiers;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;

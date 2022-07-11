@@ -17,6 +17,8 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
+import net.untitledcreaturemod.IdleCreature.HasDefaultAnimations;
+import net.untitledcreaturemod.ModEntities;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
@@ -31,32 +33,28 @@ public class ToadEntity extends AnimalEntity implements IAnimatable {
     protected static final TrackedData<Byte> ANIMATION = DataTracker.registerData(ToadEntity.class, TrackedDataHandlerRegistry.BYTE);
     private final AnimationFactory factory = new AnimationFactory(this);
 
-    protected enum Animation {
+    protected enum ToadAnimations implements HasDefaultAnimations {
         Idle, Walk,
         SwimIdle, Swim,
         DigIn, DigIdle, DigBite, DigOut;
 
-        private static final AnimationBuilder WALK_ANIM = new AnimationBuilder().addAnimation("walk", true);
         private static final AnimationBuilder IDLE_ANIM = new AnimationBuilder().addAnimation("idle", true);
-        private static final AnimationBuilder SWIM_ANIM = new AnimationBuilder().addAnimation("swim", true);
+        private static final AnimationBuilder WALK_ANIM = new AnimationBuilder().addAnimation("walk", true);
         private static final AnimationBuilder SWIM_IDLE_ANIM = new AnimationBuilder().addAnimation("idle_swim", true);
+        private static final AnimationBuilder SWIM_ANIM = new AnimationBuilder().addAnimation("swim", true);
+
         private static final AnimationBuilder DIG_IN_ANIM = new AnimationBuilder().addAnimation("dig_in", true);
         private static final AnimationBuilder DIG_IDLE_ANIM = new AnimationBuilder().addAnimation("dig_idle", true);
         private static final AnimationBuilder DIG_BITE_ANIM = new AnimationBuilder().addAnimation("dig_bite", true);
         private static final AnimationBuilder DIG_OUT_ANIM = new AnimationBuilder().addAnimation("dig_out", true);
 
-
-        private static final Animation[] allValues = values();
+        private static final ToadAnimations[] allValues = values();
 
         public byte toByte() {
             return (byte)this.ordinal();
         }
-        public static Animation fromByte(byte idx) {
+        public static ToadAnimations fromByte(byte idx) {
             return allValues[idx];
-        }
-
-        public boolean isSpecial() {
-            return this != Idle && this != Walk && this != SwimIdle && this != Swim;
         }
 
         public AnimationBuilder toAnimation() {
@@ -70,6 +68,18 @@ public class ToadEntity extends AnimalEntity implements IAnimatable {
                 case DigBite -> DIG_BITE_ANIM;
                 case DigOut -> DIG_OUT_ANIM;
             };
+        }
+
+        public boolean isSpecial() {
+            return this != Idle && this != Walk && this != SwimIdle && this != Swim;
+        }
+
+        public static AnimationBuilder defaultAnimation(boolean isMoving, boolean inWater) {
+            if (inWater) {
+                return isMoving ? ToadAnimations.SWIM_ANIM : ToadAnimations.SWIM_IDLE_ANIM;
+            } else {
+                return isMoving ? ToadAnimations.WALK_ANIM : ToadAnimations.IDLE_ANIM;
+            }
         }
     }
 
@@ -88,24 +98,17 @@ public class ToadEntity extends AnimalEntity implements IAnimatable {
     @Override
     protected void initDataTracker() {
         super.initDataTracker();
-        this.dataTracker.startTracking(ANIMATION, Animation.Idle.toByte());
+        this.dataTracker.startTracking(ANIMATION, ToadAnimations.Idle.toByte());
     }
 
     @Nullable
     @Override
     public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        // TODO: Implement
-        return null;
-    }
-
-    @Override
-    public boolean cannotBeSilenced() {
-        return super.cannotBeSilenced();
+        return ModEntities.TOAD.get().create(world);
     }
 
     @Override
     protected void initGoals() {
-        this.goalSelector.add(0, new WanderAroundGoal(this, 1.0D));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.6D));
         this.goalSelector.add(2, new AnimalMateGoal(this, 1.0D));
         this.goalSelector.add(3, new TemptGoal(this, 1.0D, BREEDING_INGREDIENT, false));
@@ -120,8 +123,8 @@ public class ToadEntity extends AnimalEntity implements IAnimatable {
         return BREEDING_INGREDIENT.test(stack);
     }
 
-    protected Animation getCurrentAnimation() {
-        return Animation.fromByte(dataTracker.get(ANIMATION));
+    protected ToadAnimations getCurrentAnimation() {
+        return ToadAnimations.fromByte(dataTracker.get(ANIMATION));
     }
 
     public boolean canLookAround() {
@@ -139,16 +142,11 @@ public class ToadEntity extends AnimalEntity implements IAnimatable {
         boolean isMoving = !(limbSwingAmount > -0.05F && limbSwingAmount < 0.05F);
         boolean inWater = isTouchingWater();
         AnimationController controller = event.getController();
-        Animation currentAnimation = getCurrentAnimation();
+        ToadAnimations currentAnimation = getCurrentAnimation();
         if (currentAnimation.isSpecial()) {
             controller.setAnimation(currentAnimation.toAnimation());
         } else {
-            // TODO: Maybe can make this general?
-            if (inWater) {
-                controller.setAnimation(isMoving ? Animation.SWIM_ANIM : Animation.SWIM_IDLE_ANIM);
-            } else {
-                controller.setAnimation(isMoving ? Animation.WALK_ANIM : Animation.IDLE_ANIM);
-            }
+            controller.setAnimation(ToadAnimations.defaultAnimation(isMoving, inWater));
         }
 
         return PlayState.CONTINUE;
