@@ -17,7 +17,6 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
-import net.untitledcreaturemod.IdleCreature.HasDefaultAnimations;
 import net.untitledcreaturemod.ModEntities;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.core.IAnimatable;
@@ -33,7 +32,7 @@ public class ToadEntity extends AnimalEntity implements IAnimatable {
     protected static final TrackedData<Byte> ANIMATION = DataTracker.registerData(ToadEntity.class, TrackedDataHandlerRegistry.BYTE);
     private final AnimationFactory factory = new AnimationFactory(this);
 
-    protected enum ToadAnimations implements HasDefaultAnimations {
+    protected enum ToadAnimations {
         Idle, Walk,
         SwimIdle, Swim,
         DigIn, DigIdle, DigBite, DigOut;
@@ -109,6 +108,7 @@ public class ToadEntity extends AnimalEntity implements IAnimatable {
 
     @Override
     protected void initGoals() {
+        this.goalSelector.add(0, new BuryGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.6D));
         this.goalSelector.add(2, new AnimalMateGoal(this, 1.0D));
         this.goalSelector.add(3, new TemptGoal(this, 1.0D, BREEDING_INGREDIENT, false));
