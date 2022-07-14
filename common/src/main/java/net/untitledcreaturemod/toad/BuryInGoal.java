@@ -4,8 +4,11 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.ai.TargetPredicate;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 
@@ -111,6 +114,11 @@ public class BuryInGoal extends Goal {
         return block == Blocks.DIRT || block == Blocks.COARSE_DIRT || block == Blocks.SAND || block == Blocks.RED_SAND || block == Blocks.GRAVEL;
     };
 
+    private boolean isBlockOccupied(BlockPos pos) {
+        var otherToad = toad.world.getClosestEntity(ToadEntity.class, TargetPredicate.DEFAULT, this.toad, pos.getX(), pos.getY(), pos.getZ(), new Box(pos).expand(1));
+        return otherToad != null;
+    }
+
     private Optional<BlockPos> findBuryBlock() {
         return this.findBlock(buryBlockPredicate, 5.0);
     }
@@ -125,7 +133,7 @@ public class BuryInGoal extends Goal {
                 for(int k = 0; k <= j; k = k > 0 ? -k : 1 - k) {
                     for(int l = k < j && k > -j ? j : 0; l <= j; l = l > 0 ? -l : 1 - l) {
                         mutable.set(blockPos, k, i - 1, l);
-                        if (blockPos.isWithinDistance(mutable, searchDistance) && predicate.test(toad.world.getBlockState(mutable))) {
+                        if (blockPos.isWithinDistance(mutable, searchDistance) && predicate.test(toad.world.getBlockState(mutable)) && !isBlockOccupied(mutable)) {
                             return Optional.of(mutable);
                         }
                     }
