@@ -9,13 +9,14 @@ import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
 public class ToadModel extends AnimatedGeoModel<ToadEntity> {
     @Override
-    public Identifier getModelLocation(ToadEntity object) {
+    public Identifier getModelLocation(ToadEntity toad) {
         return ModIdentifiers.Toad.MODEL;
     }
 
     @Override
-    public Identifier getTextureLocation(ToadEntity object) {
-        return ModIdentifiers.Toad.TEXTURE;
+    public Identifier getTextureLocation(ToadEntity toad) {
+        toad.getVariant();
+        return ModIdentifiers.Toad.TEXTURE_CAVERNOUS;
     }
 
     @Override

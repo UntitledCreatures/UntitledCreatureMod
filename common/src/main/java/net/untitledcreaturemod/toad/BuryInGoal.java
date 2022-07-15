@@ -6,10 +6,12 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ai.TargetPredicate;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.BlockStateRaycastContext;
+import net.minecraft.world.World;
 import org.slf4j.Logger;
 
 import java.util.EnumSet;
@@ -49,6 +51,10 @@ public class BuryInGoal extends Goal {
         return toad.getRandom().nextInt(40) == 0;
     }
 
+    private boolean isOccluded(World world, BlockPos pos, Vec3d src) {
+        return world.raycast(new BlockStateRaycastContext(Vec3d.ofCenter(pos), src, state -> !state.isAir())).getType() == HitResult.Type.BLOCK;
+    }
+
     @Override
     public void start() {
         var buryBlock = findBuryBlock();
@@ -57,8 +63,13 @@ public class BuryInGoal extends Goal {
             // When found a block to bury in start moving to it
             var aboveBlock = buryBlock.get().add(0,1,0);
             LOGGER.info("Moving to " + aboveBlock);
-            toad.getNavigation().startMovingTo(aboveBlock.getX(), aboveBlock.getY(), aboveBlock.getZ(), 1.0D);
-            buryGoal = buryBlock;
+
+            if (!isOccluded(toad.world, aboveBlock, toad.getEyePos())) {
+                toad.getNavigation().startMovingTo(aboveBlock.getX(), aboveBlock.getY(), aboveBlock.getZ(), 1.0D);
+                buryGoal = buryBlock;
+            } else {
+                LOGGER.info("Target block is occluded, skipping");
+            }
         } else {
             LOGGER.info("Could not find a block to bury in");
         }
@@ -84,12 +95,11 @@ public class BuryInGoal extends Goal {
             LOGGER.info("Distance: " + distance);
 
             // Start animation once goal was reached
-            if (toad.getNavigation().isIdle() || this.toad.getBlockPos().down() == buryBlockPos) {
+            if (distance < 3.0f || this.toad.getBlockPos().down() == buryBlockPos) {
                 var aboveBlock = buryBlockPos.add(0,1,0);
-                toad.setPos(aboveBlock.getX(), aboveBlock.getY(), aboveBlock.getZ());
-                toad.refreshPositionAndAngles((double)aboveBlock.getX() + 0.5D, (double)aboveBlock.getY() + 0.4D, (double)aboveBlock.getZ() + 0.5D, toad.bodyYaw, 0.0F);
+                // TODO: Figure out why this does not work adn pushed toad forward slightly
                 toad.setVelocity(Vec3d.ZERO);
-
+                toad.refreshPositionAndAngles((double)aboveBlock.getX() + 0.5D, (double)aboveBlock.getY() + 0.4D, (double)aboveBlock.getZ() + 0.5D, toad.bodyYaw, 0.0F);
                 toad.setDigIn(true, true);
                 buryTicks = BURY_DURATION;
                 buryGoal = Optional.empty();
